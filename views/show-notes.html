@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Show Notes</title>
+</head>
+<body>
+
+  <h1>Your Notes</h1>
+
+  <p>
+    These notes are fetched from the <code>/notes</code> API.
+  </p>
+
+  <ul id="notes-list">
+    <li>Loading notes...</li>
+  </ul>
+
+  <hr />
+
+  <nav>
+    <a href="/dashboard">Back to Dashboard</a> |
+    <a href="/logout">Logout</a>
+  </nav>
+
+  <script>
+    fetch("http://localhost:3000/notes")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Not authorized or failed to fetch notes");
+        }
+        return response.json();
+      })
+      .then(data => {
+        const list = document.getElementById("notes-list");
+        list.innerHTML = "";
+
+        data.forEach(note => {
+          const li = document.createElement("li");
+          li.textContent = note.title+":"+note.body;
+          list.appendChild(li);
+        });
+      })
+      .catch(err => {
+        const list = document.getElementById("notes-list");
+        list.innerHTML = "";
+        const li = document.createElement("li");
+        li.textContent = "Could not load notes.";
+        list.appendChild(li);
+      });
+  </script>
+
+</body>
+</html>

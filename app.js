@@ -1,0 +1,68 @@
+import notesRoute from "./routes/notes.js"
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+//add session
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// initialize passport
+
+//Create POST login
+
+//Create logout
+
+//Create a function to authenticate if a user logged in
+
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "login.html"));
+});
+
+
+//Protecting routes
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "dashboard.html"));
+});
+
+app.get("/show-notes", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "show-notes.html"));
+});
+
+
+app.use((req, res, next)=>{
+  console.log("Request received in this global middleware function");
+  next();
+});
+
+app.use("/crash",(req,res,next)=>{
+    const error = new Error("Authenticated failed");
+    error.status =401;
+    next(error);
+})
+app.use("/notes",ensureAuthenticated, notesRoute);
+
+//4. Route not found middleware function
+app.use((a,b,c) =>{
+  const error = new Error("We don't have that route in our API listings");
+  error.status = 404;
+  c(error);
+});
+
+app.use((err, req, res, next)=>{
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({
+    ERROR:{
+      status: statusCode,
+      message: err.message
+    }
+  })
+});
+
+
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
