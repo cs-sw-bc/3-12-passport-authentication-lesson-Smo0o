@@ -1,37 +1,62 @@
 import notesRoute from "./routes/notes.js"
 import path from "path";
 import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import session from "express-session";
+import express from "express"
+import passport from "./passport.js";
+import connectDB from "./db.js";
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 const app = express();
 
+connectDB();
 //add session
+app.use(session({
+  secret: "daniel cat",
+  resave: false,
+  saveUninitialized: false
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // initialize passport
-
+app.use(passport.initialize());
+app.use(passport.session());
 //Create POST login
+app.post("/login",
+passport.authenticate('local', { failureRedirect: '/crash', failureMessage: true, successRedirect: '/dashboard'}
+));
 
+function ensureAuthenticated(req, res, next){
+  if(req.isAuthenticated()){
+    return next();
+  }else{
+    res.redirect('/login');
+  }
+}
 //Create logout
-
+app.get('/logout', function(req, res, next){
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/login');
+  });
+});
 //Create a function to authenticate if a user logged in
 
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "login.html"));
+  res.sendFile(path.join(dirname, "views", "login.html"));
 });
 
 
 //Protecting routes
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "dashboard.html"));
+app.get("/dashboard", ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(dirname, "views", "dashboard.html"));
 });
 
-app.get("/show-notes", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "show-notes.html"));
+app.get("/show-notes", ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(dirname, "views", "show-notes.html"));
 });
 
 
@@ -45,7 +70,7 @@ app.use("/crash",(req,res,next)=>{
     error.status =401;
     next(error);
 })
-app.use("/notes",ensureAuthenticated, notesRoute);
+app.use("/notes", ensureAuthenticated, notesRoute);
 
 //4. Route not found middleware function
 app.use((a,b,c) =>{
